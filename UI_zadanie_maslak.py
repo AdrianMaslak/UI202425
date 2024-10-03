@@ -45,7 +45,7 @@ class Monk:
         if self.garden.grid[y][x] != 0:
             print(f"Monk {self.id} attempted to start at a blocked position ({x}, {y}) and stopped.")
             return False
-
+ #asd
         # Set initial direction based on the entry point
         if y == 0:  # Top edge
             self.direction = (0, 1)  # Moving down
