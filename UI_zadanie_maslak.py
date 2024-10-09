@@ -5,6 +5,7 @@ class ZenGarden:
     def __init__(self, width, height, rocks):
         self.width = width
         self.height = height
+        self.rock_count = len(rocks)
         self.base_grid = [[0] * width for _ in range(height)]  # Initialize a base grid
 
         # Place rocks in the base grid as -1
@@ -60,20 +61,9 @@ class Gene:
         self.generate_rotation()
 
     def generate_rotation(self):
-        # Define possible rotations or directional changes
-        directions = ['up', 'right', 'down', 'left']
-        
-        # Find the current index of the direction
-        current_index = directions.index(self.direction)
-        
-        # Randomly choose whether to rotate left (-1) or right (+1)
-        rotation = random.choice([-1, 1])
-        
-        # Calculate the new direction index (wrap around with modulo)
-        new_index = (current_index + rotation) % len(directions)
-        
-        # Assign the new direction
-        self.direction = directions[new_index]
+        self.rotation = [
+            int(a) for a in bin(random.randrange(1024))[2:].zfill(10)
+        ]
 
 class Genome:
     def __init__(self, garden, initialize = True):
@@ -83,7 +73,7 @@ class Genome:
         self.genes = []
 
         if initialize:
-            for _ in range(self.genes):
+            for _ in range(garden.width + garden.height + garden.rock_count):
                 gene = Gene(self.original_garden)  # Pass the reference to original garden
                 self.genes.append(gene)
             self.rake()
@@ -212,7 +202,7 @@ class Genome:
         # Mutations: new gene generation or rotation regeneration
         for i in range(len(new.genes)):
             p = random.random()
-            if p < 0.1:  # 5% chance to generate a new gene
+            if p < 0.2:  # 5% chance to generate a new gene
                 new.genes[i] = Gene(self.original_garden)
             elif p < 0.10:  # 10% chance to regenerate rotations
                 new.genes[i].generate_rotation()
@@ -226,7 +216,7 @@ def solve(rocks, width=12, height=10):
     """Solve the ZenGarden problem with the given rock positions."""
     garden = ZenGarden(width, height, rocks)
     population_size = 100
-    generations = 30  # Run for 10 generations
+    generations = 1000  # Run for 10 generations
     num_genes = 28
     population = [Genome(garden, num_genes) for _ in range(population_size)]
     
@@ -242,13 +232,14 @@ def solve(rocks, width=12, height=10):
 
         # Print generation stats
         print(f'Generation: {gc + 1}, Best Fitness: {best.fitness}/{garden.max_fitness}')
-        garden.display_garden(best.garden.grid)
 
         # Check if the best genome solved the garden
         if best.fitness == garden.max_fitness:
             print("Solution found!")
             garden.display_garden(best.garden)
             break
+    garden.display_garden(best.garden.grid)
+
 
 # Example usage
 rocks = [(5, 3), (2, 6), (9, 1), (3, 1), (8, 6), (9, 6)]
