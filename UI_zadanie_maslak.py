@@ -76,14 +76,14 @@ class Gene:
         self.direction = directions[new_index]
 
 class Genome:
-    def __init__(self, garden, num_genes, initialize = True):
+    def __init__(self, garden, initialize = True):
         self.original_garden = garden  # Keep a reference to the original garden
         self.garden = ZenGarden(garden.width, garden.height, [(x, y) for y in range(garden.height) for x in range(garden.width) if garden.base_grid[y][x] == -1])
         self.fitness = 0
         self.genes = []
 
         if initialize:
-            for _ in range(num_genes):
+            for _ in range(self.genes):
                 gene = Gene(self.original_garden)  # Pass the reference to original garden
                 self.genes.append(gene)
             self.rake()
@@ -157,9 +157,18 @@ class Genome:
 
                 # A ak su dve tak jedno vyberieme
                 elif nv.count(0) == 2:
-                    pos = n[gene.rotation[ri]]
+                    # Create a mapping of directions to indices in `n`
+                    direction_map = {
+                    'up': 0,    # Choose the first element from `n` for 'up'
+                    'down': 1,  # Choose the second element from `n` for 'down'
+                    'left': 0,  # Choose the first element from `n` for 'left'
+                    'right': 1  # Choose the second element from `n` for 'right'
+                    }
+
+                    # Use the direction_map to get the correct index
+                    pos = n[direction_map[gene.direction]]
                     ri += 1
-                    if ri == len(gene.rotation):
+                    if ri == len(gene.direction):
                         ri = 0
 
                 # Ak ani jedno nie je nepohrabane tak koncime
@@ -179,25 +188,13 @@ class Genome:
 
             self.set_fitness()
 
-    def handle_turn(self, gene, direction, ri):
-        """Handle turn based on the gene's rotation list."""
-        rotation = gene.rotation[ri]
-        if direction == (1, 0):  # Moving down
-            return (0, 1) if rotation == 'right' else (0, -1)  # Turn right or left
-        elif direction == (-1, 0):  # Moving up
-            return (0, -1) if rotation == 'left' else (0, 1)  # Turn left or right
-        elif direction == (0, 1):  # Moving right
-            return (-1, 0) if rotation == 'left' else (1, 0)  # Turn up or down
-        elif direction == (0, -1):  # Moving left
-            return (1, 0) if rotation == 'left' else (-1, 0)  # Turn down or up
-
     def set_fitness(self):
         """Calculate the fitness as the number of raked cells."""
-        self.fitness = sum(1 for row in self.garden for cell in row if cell > 0)  # Count only raked cells
+        self.fitness = sum(1 for x in sum(self.garden.grid, []) if x > 0 )  # Count only raked cells
 
     def crossover(self, other):
         """Create a new genome by crossing over genes from two parents."""
-        new = Genome(self.original_garden, num_genes=len(self.genes))
+        new = Genome(self.original_garden)
 
         # Randomly choose the crossover type
         p = random.random()
@@ -229,10 +226,10 @@ def solve(rocks, width=12, height=10):
     """Solve the ZenGarden problem with the given rock positions."""
     garden = ZenGarden(width, height, rocks)
     population_size = 100
-    generations = 10  # Run for 10 generations
+    generations = 30  # Run for 10 generations
     num_genes = 28
     population = [Genome(garden, num_genes) for _ in range(population_size)]
-
+    
     for gc in range(generations):
         best = max(population, key=lambda x: x.fitness)
         next_generation = [best]
@@ -245,7 +242,7 @@ def solve(rocks, width=12, height=10):
 
         # Print generation stats
         print(f'Generation: {gc + 1}, Best Fitness: {best.fitness}/{garden.max_fitness}')
-        garden.display_garden(best.garden)
+        garden.display_garden(best.garden.grid)
 
         # Check if the best genome solved the garden
         if best.fitness == garden.max_fitness:
